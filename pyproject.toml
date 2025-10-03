@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "crypto-news-api"
+version = "1.0.0"
+description = "AI-powered cryptocurrency news analysis and data extraction API"
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [
+    {name = "Crypto News Team"}
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+]
+requires-python = ">=3.11"
+dependencies = [
+    "requests==2.31.0",
+    "python-dotenv==1.0.0",
+    "pydantic==2.5.0",
+    "psycopg2-binary==2.9.9",
+    "fastapi==0.104.1",
+    "uvicorn[standard]==0.24.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0",
+    "pytest-asyncio",
+    "black",
+    "flake8",
+    "mypy",
+]
+
+[project.urls]
+Homepage = "https://github.com/example/crypto-news-api"
+Documentation = "https://github.com/example/crypto-news-api/docs"
+Repository = "https://github.com/example/crypto-news-api.git"
+
+[tool.black]
+line-length = 100
+target-version = ['py311']
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
