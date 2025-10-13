@@ -8,7 +8,15 @@ import requests
 @tool
 def get_health():
     """
-    Return information regarding the status of the server.
+    Retrieve the server health status.
+
+    Sends a GET request to the health endpoint and returns a JSON object containing information about the server status.
+
+    Returns:
+        dict: A dictionary with the following keys:
+            - "status" (str): The status of the server.
+            - "timestamp" (str): The timestamp of the server status.
+            - "database" (str): The status of the database connection.
     """
     response = requests.get("http://localhost:8000/health")
     return response.json()
@@ -36,12 +44,11 @@ def get_db_news(start_date: str, end_date: str):
                 - "created_at" (str): The creation timestamp in ISO8601 format.
                 - "kind" (str): The category or type of news.
     """
-    # Make curl request to endpoint http://localhost:8000/api/v1/news
     response = requests.get("http://localhost:8000/api/v1/news", params={"start": start_date, "end": end_date})
     return response.json()
      
 
-# 2. Load Llama 3.1 via Ollama
+# Load Llama 3.1 via Ollama
 llm = ChatOllama(model="llama3.1:8b")
 system_prompt = """
 You are a crypto news assistant named Atlas.
@@ -49,8 +56,9 @@ You are a crypto news assistant named Atlas.
 - You have access to several tools (database queries, health checks).
 
 Tool usage rules:
-- Use tools **only when necessary** to answer user questions about crypto news (e.g. "What happened with ETH yesterday?").
+- Use tools **only when necessary** to answer user questions about crypto news (e.g. "What happened with ETH this week?").
 - If the question is general or unrelated to crypto, respond directly without calling tools.
+- The get_health tool can be used to check the health of the server and to also get the current timestamp.
 - Do NOT mention tool names, tool usage, or your internal reasoning to the user.
 - If the database returns no results, say exactly: "No news found for that time period." Do not fabricate news or speculate.
 
@@ -62,8 +70,11 @@ Answering style:
 - Do NOT explain whether a tool was used or not.
 - Only output the final, user-facing answer.
 """
-# 3. Create a prompt template
+
+# Basic memory storage with conversation history
 memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
+
+# Create a prompt template
 prompt = ChatPromptTemplate.from_messages([
     ("system", system_prompt),
     ("placeholder", "{chat_history}"),  
@@ -71,13 +82,9 @@ prompt = ChatPromptTemplate.from_messages([
     ("placeholder", "{agent_scratchpad}"),
 ])
 
-# 4. Create a tool-calling agent by passing the LLM directly without binding tools explicitly
+# Create a tool-calling agent by passing the LLM directly without binding tools explicitly
 agent = create_tool_calling_agent(llm, [get_db_news, get_health], prompt)
 agent_executor = AgentExecutor(agent=agent, tools=[get_db_news, get_health], memory=memory, verbose=True)
-
-# 5. Invoke the agent
-# result = agent_executor.invoke({"input": "What happened in crypto on the 28th of September? Only fetch news from that specific date."})
-# print(result["output"])
 
 # Loop the agent executor, having the user input their message, and the agent executor will return the response
 while True:
