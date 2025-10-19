@@ -7,3 +7,12 @@ venv/
 
 # Environment file 
 .env
+
+# Proof of Concept UI
+atlas-ui/
+
+# Output files
+out.txt
+
+# Logs
+logs

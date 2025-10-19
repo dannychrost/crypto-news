@@ -1,0 +1,1 @@
+from .crypto_news_prompt import system_prompt

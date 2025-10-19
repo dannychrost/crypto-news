@@ -1,58 +1,84 @@
 # Crypto News Bot
 
-Containerized backend for storing crypto news from aggregators like CryptoPanic in PostgreSQL, and enabling a local Ollama llama3.1:8b model to generate meaningful analysis and summaries of current and past events in relation to price movements.
+Tool-powered assistant for exploring recent cryptocurrency headlines. The stack combines a FastAPI backend (for stored news + health checks), LangChain agents, and OpenAI chat models with optional Tavily web search.
 
-## Features
+## What It Does
 
-- 🔍 **News Aggregator**: Periodically fetches crypto news from the Crypto Panic API and stores key information in a PostgreSQL database through a scheduled backend process.
-- 🗄️ **Database**: Uses Docker to set up and manage a PostgreSQL database container.
-- 🌐 **API Endpoints**: Provides RESTful endpoints using FastAPI for accessing and querying the news data.
-- 🤖 **Local LLM Integration**: A custom tool-calling setup (via `llm_comm.py`) allows the local LLM to access database information and generate meaningful analysis and summaries of current and past events. Manually needs to be started post setup along with having downloaded Ollama and llama3.1:8b model.
+- **Scheduled ingestion** – Pulls crypto stories into PostgreSQL so the agent can answer questions from local history.
+- **Agent-ready API** – FastAPI exposes `/api/v1/news` and `/health`, which the assistant uses through LangChain tools.
+- **OpenAI + LangChain** – `scripts/openai_comm.py` spins up an interactive CLI agent that routes between the database, health check, and a Tavily-backed web search tool.
+- **Web search logging** – Every Tavily lookup gets summarized, cleaned, and written to `logs/web_search.log` for traceability.
 
-## Setup
+## Getting Started
 
-### 1. Create Virtual Environment
+### 1. Environment
 
-```bash
-# Create virtual environment
+```powershell
 python -m venv venv
-
-# Activate virtual environment
-# On Windows:
-venv\Scripts\activate
-# On macOS/Linux:
-source venv/bin/activate
+.\venv\Scripts\activate      # Windows
+# source venv/bin/activate   # macOS/Linux
 ```
 
 ### 2. Install Dependencies
 
-```bash
+```powershell
 pip install -r requirements.txt
 ```
 
-### 3. Configure Environment Variables
+### 3. Configure `.env`
 
-```bash
-# Copy the example environment file
-copy env.example .env
+Copy `env.example` to `.env` and set:
 
-# Edit .env and add your credentials
-# Replace placeholder values with your actual credentials
+- `API_BASE_URL` – URL for the FastAPI service (defaults to `http://localhost:8000`).
+- `OPENAI_API_KEY` – key for OpenAI’s API.
+- `TAVILY_API_KEY` – key for Tavily web search.
+- Any other keys used by your ingestion jobs (e.g., CryptoPanic).
+
+### 4. Run the Backend
+
+```powershell
+docker compose up -d     # PostgreSQL + FastAPI stack
+docker compose ps        # confirm services are healthy
 ```
 
-### 4. Get Crypto Panic API Key
+### 5. Launch the Agent CLI
 
-1. Visit [Crypto Panic API](https://cryptopanic.com/developers/api/)
-2. Sign up for a free Developer account
-3. Retrieve your API key from the dashboard
-4. Add it to your `.env` file
-
-### 5. Start Containers
-
-```bash
-# Start PostgreSQL database, Uvicorn server, and background scheduler with Docker
-docker-compose up -d
-
-# Check if database is running
-docker-compose ps
+```powershell
+python -m scripts.openai_comm
 ```
+
+Sample prompts:
+
+- `what's up with crypto this week?`
+- `find the latest Dogecoin news from the web`
+- `why did ETH drop yesterday?`
+
+Each turn prints token usage; when the agent calls Tavily, results are also appended to `logs/web_search.log`.
+
+### 6. Explore the Atlas UI Prototype
+
+A TypeScript proof-of-concept lives in `atlas-ui/`. It sketches the “command deck” interface with mock data.
+
+```powershell
+cd atlas-ui
+npm install
+npm run dev
+```
+
+Head to http://localhost:5174 to explore the interactive dashboard.
+
+## Files to Know
+
+- `scripts/openai_comm.py` – interactive chat loop for the OpenAI-powered LangChain agent.
+- `app/tools/*` – LangChain tools: database news, server health, and Tavily search (with logging).
+- `app/prompts/crypto_news_prompt.py` – system prompt guiding tool usage and response style.
+- `logs/web_search.log` – plain-text record of every web search query and the URLs returned.
+- `atlas-ui/` – React + TypeScript proof-of-concept for the Atlas command deck experience.
+
+## Legacy Ollama Flow
+
+The repo originally included an Ollama-based CLI (`scripts/llm_comm.py`). It’s kept in `scripts/archive/` for reference, but the supported path is now OpenAI + Tavily.
+
+## Contributing
+
+Pull requests are welcome—please keep comments concise and stick to ASCII to avoid platform encoding issues. For big changes (new tools, prompt tweaks), update the README so the workflow stays clear.

@@ -17,9 +17,9 @@ def fetch_crypto_news(filter_type: str = "hot", currencies: str = "BTC,ETH", kin
     params = {
         'auth_token': api_key,
         'public': 'true',
-        'filter': filter_type,
-        'currencies': currencies,
-        'kind': kind
+        'filter': filter_type, # rising, hot, bullish, bearish, important, saved, lol (optional)
+        'currencies': currencies, # BTC, ETH, XRP, ADA, DOGE, SOL, DOT, LTC, USDT, BNB (optional)
+        'kind': kind # news, media, all (optional)
     }
     
     try:
