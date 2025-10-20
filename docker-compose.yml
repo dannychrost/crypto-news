@@ -8,7 +8,7 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "${DB_PORT:-5432}:5432"
+      - "${DB_PORT:-55432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./data/init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -36,6 +36,18 @@ services:
       CRYPTO_PANIC_API_KEY: ${CRYPTO_PANIC_API_KEY}
     ports:
       - "8000:8000"
+    volumes:
+      - ./app:/app/app:ro
+    command:
+      [
+        "uvicorn",
+        "app.main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "--reload",
+      ]
     depends_on:
       postgres:
         condition: service_healthy
@@ -62,6 +74,8 @@ services:
       postgres:
         condition: service_healthy
     restart: unless-stopped
+    volumes:
+      - ./scripts/news_scheduler.py:/app/news_scheduler.py:ro
     networks:
       - crypto_network
 
